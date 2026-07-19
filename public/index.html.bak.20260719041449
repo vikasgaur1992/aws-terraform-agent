@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<title>AWS Terraform Agent</title>
+
+<style>
+
+body{
+ font-family: Arial;
+ margin:20px;
+}
+
+input,select{
+ width:400px;
+ margin-bottom:10px;
+ padding:8px;
+}
+
+button{
+ padding:10px;
+ margin-right:10px;
+}
+
+#output{
+ background:#f5f5f5;
+ padding:20px;
+ margin-top:20px;
+ white-space:pre-wrap;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>AWS Terraform Multi Resource Portal</h1>
+
+<label>Resource Type</label><br>
+
+<select id="resourceType">
+
+<option value="ec2">EC2</option>
+<option value="s3">S3</option>
+<option value="ebs">EBS</option>
+<option value="rds">RDS</option>
+<option value="vpc">VPC</option>
+<option value="security_group">Security Group</option>
+<option value="alb">ALB</option>
+<option value="route53">Route53</option>
+<option value="ecs">ECS</option>
+<option value="eks">EKS</option>
+<option value="lambda">Lambda</option>
+<option value="fsx">FSx</option>
+<option value="elasticache">ElastiCache</option>
+
+</select>
+
+<br>
+
+<label>Name</label><br>
+<input id="name"><br>
+
+<label>Region</label><br>
+<input id="region" value="us-east-1"><br>
+
+<label>AMI</label><br>
+<input id="ami"><br>
+
+<label>Instance Type</label><br>
+<input id="instanceType" value="t3.micro"><br>
+
+<label>Key Pair</label><br>
+<input id="keyName"><br>
+
+<label>Subnet Id</label><br>
+<input id="subnetId"><br>
+
+<label>Security Groups (comma separated)</label><br>
+<input id="securityGroupIds"><br>
+
+<label>Root Volume Size</label><br>
+<input id="rootVolumeSize" value="30"><br>
+
+<label>Additional Volume Size</label><br>
+<input id="additionalVolumeSize" value="0"><br>
+
+<label>Bucket Name (For S3)</label><br>
+<input id="bucketName"><br>
+
+<label>Request Id</label><br>
+<input id="requestId"><br>
+
+<button onclick="generate()">
+Generate
+</button>
+
+<button onclick="applyResource()">
+Apply
+</button>
+
+<button onclick="destroyResource()">
+Destroy
+</button>
+
+<button onclick="loadRequests()">
+Refresh Requests
+</button>
+
+<div id="output"></div>
+
+<script>
+
+async function generate(){
+
+ const payload={
+
+   resourceType:
+   document.getElementById('resourceType').value,
+
+   name:
+   document.getElementById('name').value,
+
+   region:
+   document.getElementById('region').value,
+
+   ami:
+   document.getElementById('ami').value,
+
+   bucketName:
+   document.getElementById('bucketName').value,
+
+   instanceType:
+   document.getElementById('instanceType').value,
+
+   keyName:
+   document.getElementById('keyName').value,
+
+   subnetId:
+   document.getElementById('subnetId').value,
+
+   securityGroupIds:
+   document.getElementById('securityGroupIds').value,
+
+   rootVolumeSize:
+   document.getElementById('rootVolumeSize').value,
+
+   additionalVolumeSize:
+   document.getElementById('additionalVolumeSize').value
+ };
+
+ const r=
+ await fetch('/generate',{
+
+   method:'POST',
+
+   headers:{
+    'Content-Type':'application/json'
+   },
+
+   body:JSON.stringify(payload)
+
+ });
+
+ const data=await r.json();
+
+ document.getElementById(
+ 'requestId'
+ ).value=data.requestId;
+
+ document.getElementById(
+ 'output'
+ ).innerText=
+ JSON.stringify(data,null,2);
+}
+
+async function applyResource(){
+
+ const id=
+ document.getElementById(
+ 'requestId'
+ ).value;
+
+ const r=
+ await fetch('/apply/'+id,{
+   method:'POST'
+ });
+
+ const data=
+ await r.json();
+
+ output.innerText=
+ JSON.stringify(data,null,2);
+}
+
+async function destroyResource(){
+
+ const id=
+ document.getElementById(
+ 'requestId'
+ ).value;
+
+ const r=
+ await fetch('/destroy/'+id,{
+   method:'POST'
+ });
+
+ const data=
+ await r.json();
+
+ output.innerText=
+ JSON.stringify(data,null,2);
+}
+
+async function loadRequests(){
+
+ const r=
+ await fetch('/requests');
+
+ const data=
+ await r.json();
+
+ output.innerText=
+ JSON.stringify(data,null,2);
+}
+
+</script>
+
+</body>
+
+</html>

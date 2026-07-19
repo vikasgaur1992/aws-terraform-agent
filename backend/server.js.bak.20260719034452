@@ -1,0 +1,150 @@
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const cors = require('cors');
+const { execSync } = require('child_process');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+
+const BASE_DIR = path.join(__dirname, '../generated');
+
+if (!fs.existsSync(BASE_DIR)) {
+    fs.mkdirSync(BASE_DIR, { recursive: true });
+}
+
+app.get('/requests', (req, res) => {
+
+    const requests = fs.readdirSync(BASE_DIR)
+        .filter(f => f.startsWith('REQ-'));
+
+    res.json(requests);
+});
+
+app.post('/generate', (req, res) => {
+
+    const data = req.body;
+
+    const requestId =
+        'REQ-' + Date.now();
+
+    const reqDir =
+        path.join(BASE_DIR, requestId);
+
+    fs.mkdirSync(reqDir);
+
+    const terraform = `
+resource "aws_instance" "server" {
+
+  ami           = "${data.ami}"
+  instance_type = "${data.instanceType}"
+  subnet_id     = "${data.subnetId}"
+
+  tags = {
+    Name = "${data.name}"
+  }
+}
+`;
+
+    fs.writeFileSync(
+        path.join(reqDir,'main.tf'),
+        terraform
+    );
+
+    fs.writeFileSync(
+        path.join(reqDir,'status.json'),
+        JSON.stringify({
+            requestId,
+            status:'GENERATED'
+        },null,2)
+    );
+
+    res.json({
+        success:true,
+        requestId
+    });
+});
+
+app.post('/apply/:id', (req,res)=>{
+
+    const reqDir =
+      path.join(BASE_DIR,req.params.id);
+
+    try {
+
+      execSync('terraform init',{
+          cwd:reqDir,
+          stdio:'inherit'
+      });
+
+      execSync(
+          'terraform apply -auto-approve',
+          {
+           cwd:reqDir,
+           stdio:'inherit'
+          }
+      );
+
+      fs.writeFileSync(
+         path.join(reqDir,'status.json'),
+         JSON.stringify({
+           requestId:req.params.id,
+           status:'CREATED'
+         },null,2)
+      );
+
+      res.json({
+         success:true,
+         status:'CREATED'
+      });
+
+    } catch(err){
+
+      res.status(500).json({
+         error:err.message
+      });
+    }
+});
+
+app.post('/destroy/:id',(req,res)=>{
+
+    const reqDir =
+      path.join(BASE_DIR,req.params.id);
+
+    try {
+
+      execSync(
+         'terraform destroy -auto-approve',
+         {
+           cwd:reqDir,
+           stdio:'inherit'
+         }
+      );
+
+      fs.writeFileSync(
+         path.join(reqDir,'status.json'),
+         JSON.stringify({
+           requestId:req.params.id,
+           status:'DESTROYED'
+         },null,2)
+      );
+
+      res.json({
+         success:true,
+         status:'DESTROYED'
+      });
+
+    } catch(err){
+
+      res.status(500).json({
+         error:err.message
+      });
+    }
+});
+
+app.listen(5000,()=>{
+ console.log('AI Agent running');
+});

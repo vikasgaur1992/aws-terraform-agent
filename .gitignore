@@ -1,0 +1,9 @@
+node_modules/
+generated/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfplan
+*.log
+outputs.json
+.env
+.DS_Store

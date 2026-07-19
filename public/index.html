@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AWS Terraform Multi Resource Portal v2</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 25px;
+    background: #f4f6f8;
+}
+
+h1 {
+    color: #232f3e;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+}
+
+input, select, textarea {
+    width: 420px;
+    padding: 8px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+button {
+    padding: 10px 16px;
+    margin: 5px;
+    cursor: pointer;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+button.destroy {
+    background: #dc2626;
+}
+
+button.plan {
+    background: #9333ea;
+}
+
+button.secondary {
+    background: #374151;
+}
+
+.resource-fields {
+    display: none;
+}
+
+#output {
+    background: #111827;
+    color: #d1fae5;
+    padding: 15px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    min-height: 160px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    background: white;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+th {
+    background: #232f3e;
+    color: white;
+}
+</style>
+</head>
+
+<body>
+
+<h1>AWS Terraform Multi Resource Portal v2</h1>
+
+<div class="card">
+    <h2>New Resource Request</h2>
+
+    <label>Resource Type</label>
+    <select id="resourceType" onchange="showFields()">
+        <option value="ec2">EC2</option>
+        <option value="s3">S3</option>
+        <option value="ebs">EBS</option>
+        <option value="rds">RDS</option>
+        <option value="vpc">VPC</option>
+        <option value="security_group">Security Group</option>
+        <option value="alb">ALB</option>
+        <option value="route53">Route53</option>
+        <option value="ecs">ECS</option>
+        <option value="eks">EKS</option>
+        <option value="lambda">Lambda</option>
+        <option value="fsx">FSx Lustre</option>
+        <option value="elasticache">ElastiCache</option>
+    </select>
+
+    <label>Name</label>
+    <input id="name" placeholder="example-resource">
+
+    <label>Region</label>
+    <input id="region" value="us-east-1">
+
+    <label>Environment</label>
+    <input id="environment" value="dev">
+
+    <label>Owner</label>
+    <input id="owner" value="terraform-agent">
+</div>
+
+<div class="card resource-fields" id="fields-ec2">
+    <h3>EC2 Parameters</h3>
+
+    <label>AMI ID</label>
+    <input id="ami" placeholder="ami-xxxxxxxx">
+
+    <label>Instance Type</label>
+    <input id="instanceType" value="t3.micro">
+
+    <label>Key Pair Name</label>
+    <input id="keyName" placeholder="my-keypair">
+
+    <label>Subnet ID</label>
+    <input id="subnetId" placeholder="subnet-xxxxxxxx">
+
+    <label>Security Group IDs comma separated</label>
+    <input id="securityGroupIds" placeholder="sg-xxxxxxxx,sg-yyyyyyyy">
+
+    <label>Root Volume Size GB</label>
+    <input id="rootVolumeSize" value="30">
+
+    <label>Root Volume Type</label>
+    <input id="rootVolumeType" value="gp3">
+
+    <label>Additional Volume Size GB. Use 0 if not required</label>
+    <input id="additionalVolumeSize" value="0">
+
+    <label>Additional Volume Type</label>
+    <input id="additionalVolumeType" value="gp3">
+
+    <label>Additional Volume Device Name</label>
+    <input id="deviceName" value="/dev/sdf">
+</div>
+
+<div class="card resource-fields" id="fields-s3">
+    <h3>S3 Parameters</h3>
+
+    <label>Bucket Name</label>
+    <input id="bucketName" placeholder="unique-bucket-name">
+
+    <label>Versioning true/false</label>
+    <input id="versioning" value="true">
+
+    <label>Block Public Access true/false</label>
+    <input id="blockPublicAccess" value="true">
+</div>
+
+<div class="card resource-fields" id="fields-ebs">
+    <h3>EBS Parameters</h3>
+
+    <label>Availability Zone</label>
+    <input id="availabilityZone" value="us-east-1a">
+
+    <label>Volume Size GB</label>
+    <input id="volumeSize" value="10">
+
+    <label>Volume Type</label>
+    <input id="volumeType" value="gp3">
+
+    <label>Encrypted true/false</label>
+    <input id="encrypted" value="true">
+</div>
+
+<div class="card resource-fields" id="fields-rds">
+    <h3>RDS Parameters</h3>
+
+    <label>DB Name</label>
+    <input id="dbName" value="appdb">
+
+    <label>Engine</label>
+    <input id="engine" value="mysql">
+
+    <label>Engine Version</label>
+    <input id="engineVersion" value="8.0">
+
+    <label>DB Instance Class</label>
+    <input id="dbInstanceClass" value="db.t3.micro">
+
+    <label>Allocated Storage GB</label>
+    <input id="allocatedStorage" value="20">
+
+    <label>DB Subnet Group</label>
+    <input id="dbSubnetGroup">
+
+    <label>Security Group IDs comma separated</label>
+    <input id="rdsSecurityGroupIds">
+
+    <label>Username</label>
+    <input id="username" value="admin">
+
+    <label>Password</label>
+    <input id="password" value="ChangeMe12345!">
+
+    <label>Multi AZ true/false</label>
+    <input id="multiAz" value="false">
+
+    <label>Backup Retention Days</label>
+    <input id="backupRetentionDays" value="7">
+</div>
+
+<div class="card resource-fields" id="fields-vpc">
+    <h3>VPC Parameters</h3>
+
+    <label>VPC CIDR</label>
+    <input id="vpcCidr" value="10.0.0.0/16">
+
+    <label>Enable DNS Support true/false</label>
+    <input id="enableDnsSupport" value="true">
+
+    <label>Enable DNS Hostnames true/false</label>
+    <input id="enableDnsHostnames" value="true">
+</div>
+
+<div class="card resource-fields" id="fields-security_group">
+    <h3>Security Group Parameters</h3>
+
+    <label>VPC ID</label>
+    <input id="vpcId">
+
+    <label>Description</label>
+    <input id="description" value="Security group created by Terraform Agent">
+
+    <label>Port</label>
+    <input id="port" value="22">
+
+    <label>Protocol</label>
+    <input id="protocol" value="tcp">
+
+    <label>CIDR Blocks comma separated</label>
+    <input id="cidrBlocks" value="0.0.0.0/0">
+</div>
+
+<div class="card resource-fields" id="fields-alb">
+    <h3>ALB Parameters</h3>
+
+    <label>VPC ID</label>
+    <input id="albVpcId">
+
+    <label>Subnet IDs comma separated</label>
+    <input id="albSubnetIds">
+
+    <label>Security Group IDs comma separated</label>
+    <input id="albSecurityGroupIds">
+
+    <label>Internal true/false</label>
+    <input id="internal" value="false">
+
+    <label>Listener Port</label>
+    <input id="listenerPort" value="80">
+
+    <label>Target Port</label>
+    <input id="targetPort" value="80">
+</div>
+
+<div class="card resource-fields" id="fields-route53">
+    <h3>Route53 Parameters</h3>
+
+    <label>Hosted Zone ID</label>
+    <input id="hostedZoneId">
+
+    <label>Record Name</label>
+    <input id="recordName" placeholder="app.example.com">
+
+    <label>Record Type</label>
+    <input id="recordType" value="A">
+
+    <label>Records comma separated</label>
+    <input id="records" placeholder="1.2.3.4">
+
+    <label>TTL</label>
+    <input id="ttl" value="300">
+</div>
+
+<div class="card resource-fields" id="fields-ecs">
+    <h3>ECS Parameters</h3>
+
+    <label>Cluster Name</label>
+    <input id="clusterName" placeholder="my-ecs-cluster">
+</div>
+
+<div class="card resource-fields" id="fields-eks">
+    <h3>EKS Parameters</h3>
+
+    <label>Cluster Name</label>
+    <input id="eksClusterName">
+
+    <label>Kubernetes Version</label>
+    <input id="kubernetesVersion" value="1.29">
+
+    <label>Cluster Role ARN</label>
+    <input id="clusterRoleArn">
+
+    <label>Subnet IDs comma separated</label>
+    <input id="eksSubnetIds">
+
+    <label>Security Group IDs comma separated</label>
+    <input id="eksSecurityGroupIds">
+</div>
+
+<div class="card resource-fields" id="fields-lambda">
+    <h3>Lambda Parameters</h3>
+
+    <label>Function Name</label>
+    <input id="functionName">
+
+    <label>Lambda Role ARN</label>
+    <input id="lambdaRoleArn">
+
+    <label>Runtime</label>
+    <input id="runtime" value="nodejs20.x">
+
+    <label>Handler</label>
+    <input id="handler" value="index.handler">
+
+    <label>Zip File Name</label>
+    <input id="zipFile" value="function.zip">
+
+    <label>Memory Size</label>
+    <input id="memorySize" value="128">
+
+    <label>Timeout</label>
+    <input id="timeout" value="30">
+</div>
+
+<div class="card resource-fields" id="fields-fsx">
+    <h3>FSx Lustre Parameters</h3>
+
+    <label>Storage Capacity GB</label>
+    <input id="storageCapacity" value="1200">
+
+    <label>Deployment Type</label>
+    <input id="deploymentType" value="SCRATCH_2">
+
+    <label>Throughput Capacity</label>
+    <input id="throughputCapacity" value="125">
+
+    <label>Subnet IDs comma separated</label>
+    <input id="fsxSubnetIds">
+
+    <label>Security Group IDs comma separated</label>
+    <input id="fsxSecurityGroupIds">
+</div>
+
+<div class="card resource-fields" id="fields-elasticache">
+    <h3>ElastiCache Parameters</h3>
+
+    <label>Engine</label>
+    <input id="cacheEngine" value="redis">
+
+    <label>Node Type</label>
+    <input id="nodeType" value="cache.t3.micro">
+
+    <label>Number of Cache Nodes</label>
+    <input id="numCacheNodes" value="1">
+
+    <label>Subnet IDs comma separated</label>
+    <input id="cacheSubnetIds">
+
+    <label>Security Group IDs comma separated</label>
+    <input id="cacheSecurityGroupIds">
+
+    <label>Parameter Group Name</label>
+    <input id="parameterGroupName" value="default.redis7">
+
+    <label>Port</label>
+    <input id="cachePort" value="6379">
+</div>
+
+<div class="card">
+    <h3>Request Actions</h3>
+
+    <label>Request ID</label>
+    <input id="requestId" placeholder="REQ-xxxxxxxx">
+
+    <br>
+
+    <button onclick="generate()">Generate Terraform</button>
+    <button class="plan" onclick="planResource()">Plan</button>
+    <button onclick="applyResource()">Apply/Create</button>
+    <button class="destroy" onclick="destroyResource()">Destroy</button>
+    <button class="secondary" onclick="viewTerraform()">View Terraform</button>
+    <button class="secondary" onclick="loadRequests()">Refresh Requests</button>
+</div>
+
+<div class="card">
+    <h3>Output</h3>
+    <pre id="output"></pre>
+</div>
+
+<script>
+function getValue(id) {
+    const el = document.getElementById(id);
+    return el ? el.value : '';
+}
+
+function showFields() {
+    const type = getValue('resourceType');
+    document.querySelectorAll('.resource-fields').forEach(function(div) {
+        div.style.display = 'none';
+    });
+
+    const active = document.getElementById('fields-' + type);
+    if (active) {
+        active.style.display = 'block';
+    }
+}
+
+function commonPayload() {
+    return {
+        resourceType: getValue('resourceType'),
+        name: getValue('name'),
+        region: getValue('region'),
+        environment: getValue('environment'),
+        owner: getValue('owner')
+    };
+}
+
+function buildPayload() {
+    const type = getValue('resourceType');
+    const p = commonPayload();
+
+    if (type === 'ec2') {
+        Object.assign(p, {
+            ami: getValue('ami'),
+            instanceType: getValue('instanceType'),
+            keyName: getValue('keyName'),
+            subnetId: getValue('subnetId'),
+            securityGroupIds: getValue('securityGroupIds'),
+            rootVolumeSize: getValue('rootVolumeSize'),
+            rootVolumeType: getValue('rootVolumeType'),
+            additionalVolumeSize: getValue('additionalVolumeSize'),
+            additionalVolumeType: getValue('additionalVolumeType'),
+            deviceName: getValue('deviceName')
+        });
+    }
+
+    if (type === 's3') {
+        Object.assign(p, {
+            bucketName: getValue('bucketName'),
+            versioning: getValue('versioning'),
+            blockPublicAccess: getValue('blockPublicAccess')
+        });
+    }
+
+    if (type === 'ebs') {
+        Object.assign(p, {
+            availabilityZone: getValue('availabilityZone'),
+            volumeSize: getValue('volumeSize'),
+            volumeType: getValue('volumeType'),
+            encrypted: getValue('encrypted')
+        });
+    }
+
+    if (type === 'rds') {
+        Object.assign(p, {
+            dbName: getValue('dbName'),
+            engine: getValue('engine'),
+            engineVersion: getValue('engineVersion'),
+            dbInstanceClass: getValue('dbInstanceClass'),
+            allocatedStorage: getValue('allocatedStorage'),
+            dbSubnetGroup: getValue('dbSubnetGroup'),
+            securityGroupIds: getValue('rdsSecurityGroupIds'),
+            username: getValue('username'),
+            password: getValue('password'),
+            multiAz: getValue('multiAz'),
+            backupRetentionDays: getValue('backupRetentionDays')
+        });
+    }
+
+    if (type === 'vpc') {
+        Object.assign(p, {
+            vpcCidr: getValue('vpcCidr'),
+            enableDnsSupport: getValue('enableDnsSupport'),
+            enableDnsHostnames: getValue('enableDnsHostnames')
+        });
+    }
+
+    if (type === 'security_group') {
+        Object.assign(p, {
+            vpcId: getValue('vpcId'),
+            description: getValue('description'),
+            port: getValue('port'),
+            protocol: getValue('protocol'),
+            cidrBlocks: getValue('cidrBlocks')
+        });
+    }
+
+    if (type === 'alb') {
+        Object.assign(p, {
+            vpcId: getValue('albVpcId'),
+            subnetIds: getValue('albSubnetIds'),
+            securityGroupIds: getValue('albSecurityGroupIds'),
+            internal: getValue('internal'),
+            listenerPort: getValue('listenerPort'),
+            targetPort: getValue('targetPort')
+        });
+    }
+
+    if (type === 'route53') {
+        Object.assign(p, {
+            hostedZoneId: getValue('hostedZoneId'),
+            recordName: getValue('recordName'),
+            recordType: getValue('recordType'),
+            records: getValue('records'),
+            ttl: getValue('ttl')
+        });
+    }
+
+    if (type === 'ecs') {
+        Object.assign(p, {
+            clusterName: getValue('clusterName')
+        });
+    }
+
+    if (type === 'eks') {
+        Object.assign(p, {
+            clusterName: getValue('eksClusterName'),
+            kubernetesVersion: getValue('kubernetesVersion'),
+            clusterRoleArn: getValue('clusterRoleArn'),
+            subnetIds: getValue('eksSubnetIds'),
+            securityGroupIds: getValue('eksSecurityGroupIds')
+        });
+    }
+
+    if (type === 'lambda') {
+        Object.assign(p, {
+            functionName: getValue('functionName'),
+            lambdaRoleArn: getValue('lambdaRoleArn'),
+            runtime: getValue('runtime'),
+            handler: getValue('handler'),
+            zipFile: getValue('zipFile'),
+            memorySize: getValue('memorySize'),
+            timeout: getValue('timeout')
+        });
+    }
+
+    if (type === 'fsx') {
+        Object.assign(p, {
+            storageCapacity: getValue('storageCapacity'),
+            deploymentType: getValue('deploymentType'),
+            throughputCapacity: getValue('throughputCapacity'),
+            subnetIds: getValue('fsxSubnetIds'),
+            securityGroupIds: getValue('fsxSecurityGroupIds')
+        });
+    }
+
+    if (type === 'elasticache') {
+        Object.assign(p, {
+            engine: getValue('cacheEngine'),
+            nodeType: getValue('nodeType'),
+            numCacheNodes: getValue('numCacheNodes'),
+            subnetIds: getValue('cacheSubnetIds'),
+            securityGroupIds: getValue('cacheSecurityGroupIds'),
+            parameterGroupName: getValue('parameterGroupName'),
+            port: getValue('cachePort')
+        });
+    }
+
+    return p;
+}
+
+async function callApi(url, method, body) {
+    const options = { method: method || 'GET' };
+
+    if (body) {
+        options.headers = { 'Content-Type': 'application/json' };
+        options.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(url, options);
+    const text = await response.text();
+
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        return text;
+    }
+}
+
+async function generate() {
+    const data = await callApi('/generate', 'POST', buildPayload());
+
+    if (data.requestId) {
+        document.getElementById('requestId').value = data.requestId;
+    }
+
+    document.getElementById('output').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+async function planResource() {
+    const id = getValue('requestId');
+    const data = await callApi('/plan/' + id, 'POST');
+    document.getElementById('output').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+async function applyResource() {
+    const id = getValue('requestId');
+    const data = await callApi('/apply/' + id, 'POST');
+    document.getElementById('output').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+async function destroyResource() {
+    const id = getValue('requestId');
+    const data = await callApi('/destroy/' + id, 'POST');
+    document.getElementById('output').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+async function viewTerraform() {
+    const id = getValue('requestId');
+    const data = await callApi('/terraform/' + id, 'GET');
+    document.getElementById('output').textContent =
+        typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+}
+
+async function loadRequests() {
+    const data = await callApi('/requests', 'GET');
+    document.getElementById('output').textContent =
+        JSON.stringify(data, null, 2);
+}
+
+showFields();
+</script>
+
+</body>
+</html>
